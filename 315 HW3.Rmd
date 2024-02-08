@@ -1,0 +1,119 @@
+---
+title: "HW3"
+author: "Saatvik Anantha"
+date: "2024-02-02"
+output: pdf_document
+---
+
+<center>
+EID: ska2242
+
+GitHub Link: https://github.com/ska4/SDS315
+</center>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+creatine <- read.csv("creatinine.csv")
+market <- read.csv('marketmodel.csv')
+covid <- read.csv('covid.csv')
+milk <- read.csv('milk.csv')
+
+library(ggplot2)
+library(tidyverse)
+library(knitr)
+library(dplyr)
+library(tibble)
+```
+
+# Problem 1
+
+## Part A
+
+```{r, echo=FALSE, include=FALSE}
+plot(creatine$age, creatine$creatclear, pch = 16, cex = 1, col = "blue", main="Correlation between Age and Patient Creatine Clearance Rate", xlab="Age", ylab="Creatine Clearance Rate (ml/minute)",)
+abline(lm(creatclear~age, data=creatine),col='red')
+lm(formula = creatclear~age, data=creatine)
+
+```
+
+We should expect a creatinine clearance rate of 114 milligrams per minute, and this was determined with the rate of change(slope) value of -0.6198 and y-intercept value of 147.813, which gives us the intercept-form of y = -0.6198x + 147.813. If 55 is plugged into y as the age, we get the x-value of 113.7239, which can be approximately 114.
+
+## Part B
+
+The creatinine clearance rate changes with age with a rate of -0.6198 ml/minute per year, and this was determined by calculating the slope of the correlation between patient age and creatinine clearance rate.
+
+## Part C
+
+The 40 year old has a healthier creatinine clearance rate for their age, as their clearance rate is significantly higher than the expected clearance rate for 40 year old people, compared to the difference between the 60 year old's creatinine clearance rate and their expected clearance rates. Based on the formula y = -0.6198x + 147.813, if both 40 and 60 are plugged in for x, we get the approximate values of 123 and 111 respectively. As 135 for the 40 year old is much greater than 123, compared to 112 for the 60 year old being slightly greater than 111, the 40 year old is healthier for their age in terms of creatinine clearance rate.
+
+\newpage
+
+# Problem 2
+
+The 'beta' of a stock is referring to how volatile a firm's stock can possibly be, and typically values greater than 1 are seen as riskier and values less than 1 are seen as safer based on systematic risk. If a 'beta' value is 0, then that means the firm has no risk, and a negative value means the firm would be safe if the market were to crash. Although firms with 'beta' values greater than 1 would experience more returns if the market prospered, they would experience more losses if the market were to crash, meaning firms with 'beta' values less than 1 are seen as systemtically safer overall. In terms of the regression model, the 'beta' value acts as the rate of change or slope value for the equation, and plays a key factor in determining the rate of return of a stock in a given period of time. Additionally, the 'beta' value is calculated with the slope values that is calculated from the regression model between the market SPY value and the given stock's value returns.
+
+```{r,echo=FALSE}
+
+Ticker <- c("AAPL","GOOG","MRK","JNJ","WMT","TGT")
+
+Intercept <- c((summary(lm(formula = AAPL ~ SPY, data=market))$coefficients[1,1]),(summary(lm(formula = GOOG ~ SPY, data=market))$coefficients[1,1]),(summary(lm(formula = MRK ~ SPY, data=market))$coefficients[1,1]),(summary(lm(formula = JNJ ~ SPY, data=market))$coefficients[1,1]),(summary(lm(formula = WMT ~ SPY, data=market))$coefficients[1,1]),(summary(lm(formula = TGT ~ SPY, data=market))$coefficients[1,1]))
+
+Slope <- c((summary(lm(formula = AAPL ~ SPY, data=market))$coefficients[1,2]),(summary(lm(formula = GOOG ~ SPY, data=market))$coefficients[1,2]),(summary(lm(formula = MRK ~ SPY, data=market))$coefficients[1,2]),(summary(lm(formula = JNJ ~ SPY, data=market))$coefficients[1,2]),(summary(lm(formula = WMT ~ SPY, data=market))$coefficients[1,2]),(summary(lm(formula = TGT ~ SPY, data=market))$coefficients[1,2]))
+
+RSquare <- c(summary(lm(formula = AAPL ~ SPY, data=market))$r.squared,summary(lm(formula = GOOG ~ SPY, data=market))$r.squared,summary(lm(formula = MRK ~ SPY, data=market))$r.squared,summary(lm(formula = JNJ ~ SPY, data=market))$r.squared,summary(lm(formula = WMT ~ SPY, data=market))$r.squared,summary(lm(formula = TGT ~ SPY, data=market))$r.squared)
+
+data <- tibble(Ticker,Intercept,Slope,RSquare)
+
+data
+
+```
+
+This table examines six different firms and their respective ticker symbols, y-intercept values, slope values, and R-square values from a regression model. More specifically, the ticker symbols represent which firm each row belongs to, the y-intercept value is the 'alpha' value in the linear regression model, the slope value is the 'beta' value that determines the riskiness and volatility of a stock, and the R-square value represents how accurate the regression model represents the actual data.
+
+In conclusion, JNJ has the lowest systematic risk out of the six stocks, while AAPL has the greatest systematic risk. This is because and JNJ and AAPL have the lowest and highest rate of change(slope) values among the six stocks, respectively.
+
+\newpage
+
+# Problem 3
+
+```{r, echo=FALSE,include=FALSE}
+spain <- covid[covid$country == "Spain",]
+italy <- covid[covid$country == "Italy",]
+
+max(spain$deaths)
+max(italy$deaths)
+```
+
+## 1
+
+Spain had an estimated growth rate of 0.284, with a doubling time of 3 days.
+
+## 2
+
+Italy had an estimated growth rate of 0.188, with a doubling time of 4 days.
+
+## 3
+
+```{r, echo=FALSE}
+
+covid$Country <- covid$country
+
+ggplot(covid, aes(x = days_since_first_death, y = deaths, colour = Country)) + geom_line() + labs(title = "Daily Deaths Over Time in Spain and Italy", x = "Days Since First Death", y = "Deaths Per Day")
+```
+
+\newpage
+
+# Problem 4
+
+```{r,echo=FALSE,include=FALSE}
+for (i in 1:116) {
+  milk$elasticity[i] <- log(milk$sales[i])/log(milk$price[i])
+}
+
+milk$elasticity <- as.numeric(milk$elasticity)
+
+mean(milk$elasticity)
+```
+
+The estimated price elasticity of demand for milk was calculated to be 3.33, and this was done by first calculating the price elasticity of demand for every pair of milk price and number of participants willing to purchase milk at that price, and this was done by simplifying the power-law model to logarithmic form. Then, the mean value of price elasticity of demand was calculated to be 3.33 in order to represent every pair of price and sales, and the value was 3.33.
