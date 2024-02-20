@@ -1,0 +1,295 @@
+---
+title: "HW4"
+author: "Saatvik Anantha"
+date: "2024-02-15"
+output: pdf_document
+---
+
+<center>
+EID: ska2242
+
+GitHub Link: https://github.com/ska4/SDS315
+</center>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+gasprices <- read.csv("gasprices.csv")
+sclass <- read.csv('sclass.csv')
+nbcpilotsurvey <- read.csv('nbc_pilotsurvey.csv')
+ebay <- read.csv('ebay.csv')
+
+library(ggplot2)
+library(tidyverse)
+library(knitr)
+library(dplyr)
+library(tibble)
+library(boot)
+```
+
+# Problem 1
+
+## Part A
+
+```{r, echo=FALSE, include=FALSE}
+
+gasprices_cor <- function(i,j) {
+  gas_data <- i[j, ]
+  split_gas <- split(gas_data$Price, gas_data$Competitors)
+  mean_gas <- mean(split_gas[[2]]) - mean(split_gas[[1]])
+  return(mean_gas)
+}
+
+boot_prices <- boot(data = gasprices, statistic = gasprices_cor, R = 10000)
+
+gas_int <- boot.ci(boot_prices, type = "basic", conf = 0.95)
+
+gas_int
+```
+
+Claim: Gas stations charge more if they lack direct competition in sight.
+
+Evidence: Out of 10,000 bootstrapped simulations, the difference in price between gas stations that have competitors and gas stations that do not is somewhere between -0.0541 and 0.0080, with 95% confidence.
+
+Conclusion: This theory is unsupported by the data, as the lower bound of the 95% bootstrapped confidence interval is less than 0 and the upper bound is greater than 0, meaning the correlation between the prices of gas stations and the presence of competition is not statistically significant based on these 10,000 bootstrapped simulations, so it is unreasonable to say this theory is accurate.
+
+## Part B
+
+```{r, echo=FALSE, include=FALSE}
+
+rich_cor <- function(i,j) {
+  rich_data <- i[j, ]
+  cor_rich <- cor(rich_data$Income, rich_data$Price)
+  return(cor_rich)
+}
+
+boot_income <- boot(data = gasprices, statistic = rich_cor, R = 10000)
+
+income_int <- boot.ci(boot_income, type = "basic", conf = 0.95)
+
+income_int
+```
+
+Claim: The richer the area, the higher the gas prices.
+
+Evidence: Out of 10,000 bootstrapped simulations, the difference between gas station prices and the income levels of their locations is somewhere between 0.2263 and 0.5912, with 95% confidence.
+
+Conclusion: This theory is supported by the data, as the lower and upper bounds of the 95% bootstrapped confidence interval are both greater than 0, meaning the correlation between the prices of gas stations and the income levels of their respective locations is statistically significant based on these 10,000 bootstrapped simulations and indicate a positive correlation, so it is reasonable to say this theory is accurate.
+
+## Part C
+
+```{r, echo=FALSE, include=FALSE}
+
+stoplight_cor <- function(i,j) {
+  light_data <- i[j, ]
+  split_light <- split(light_data$Price, light_data$Stoplight)
+  mean_light <- mean(split_light[[2]]) - mean(split_light[[1]])
+  return(mean_light)
+}
+
+boot_light <- boot(data = gasprices, statistic = stoplight_cor, R = 10000)
+
+light_int <- boot.ci(boot_light, type = "basic", conf = 0.95)
+
+light_int
+```
+
+Claim: Gas stations at stoplights charge more.
+
+Evidence: Out of 10,000 bootstrapped simulations, the difference between gas station prices and whether or not they are at stoplights is somewhere between -0.0369 and 0.309, with 95% confidence.
+
+Conclusion: This theory is unsupported by the data, as the lower bound of the 95% bootstrapped confidence interval is less than 0 and the upper bound is greater than 0, meaning the correlation between the prices of gas stations and their presence at stoplights is not statistically significant based on these 10,000 bootstrapped simulations, so it is unreasonable to say this theory is accurate.
+
+## Part D
+
+```{r, echo=FALSE, include=FALSE}
+
+highway_cor <- function(i,j) {
+  highway_data <- i[j, ]
+  split_highway <- split(highway_data$Price, highway_data$Highway)
+  mean_highway <- mean(split_highway[[2]]) - mean(split_highway[[1]])
+  return(mean_highway)
+}
+
+boot_highway <- boot(data = gasprices, statistic = highway_cor, R = 10000)
+
+highway_int <- boot.ci(boot_highway, type = "basic", conf = 0.95)
+ggplot(gasprices, aes(x = Highway, y = Price, fill = Highway)) + geom_boxplot()
+
+highway_int
+```
+
+Claim: Gas stations with direct highway access charge more.
+
+Evidence: Out of 10,000 bootstrapped simulations, the difference between gas station prices and their direct access to highways is somewhere between 0.0098 and 0.0832, with 95% confidence. 
+
+Conclusion: This theory is supported by the data, as the lower and upper bounds of the 95% bootstrapped confidence interval are both greater than 0, meaning the correlation between the prices of gas stations and their direct access to highways is statistically significant based on these 10,000 bootstrapped simulations and indicate a positive correlation. The distribution of the gas prices with direct access to highways has a greater average and IQR range than the distribution of the gas prices without access to highways, so it is reasonable to say this theory is accurate.
+
+## Part E
+
+```{r, echo=FALSE, include=FALSE}
+
+gasprices$shell <- ifelse(gasprices$Brand == "Shell", "Y", "N")
+
+shell_cor <- function(i,j) {
+  shell_data <- i[j, ]
+  split_shell <- split(shell_data$Price, shell_data$shell)
+  mean_shell <- mean(split_shell[[2]]) - mean(split_shell[[1]])
+  return(mean_shell)
+}
+
+boot_shell <- boot(data = gasprices, statistic = shell_cor, R = 10000)
+
+shell_int <- boot.ci(boot_shell, type = "basic", conf = 0.95)
+
+shell_int
+```
+
+Claim: Shell charges more than all other non-Shell brands.
+
+Evidence: Out of 10,000 bootstrapped simulations, the difference between gas station prices at Shell brands and non-Shell brands is somewhere between -0.0106 and 0.0641, with 95% confidence. 
+
+Conclusion: This theory is unsupported by the data, as the lower bound of the 95% bootstrapped confidence interval is less than 0 and the upper bound is greater than 0, meaning the correlation between the prices of gas stations at Shell brands and non-Shell brands is not statistically significant based on these 10,000 bootstrapped simulations, so it is unreasonable to say this theory is accurate.
+
+\newpage
+
+# Problem 2
+
+## Part A
+
+```{r, echo=FALSE, include=FALSE}
+sclass_2011 <- sclass[sclass$year == "2011",]
+cars_116 <- sclass_2011[sclass_2011$trim == "63 AMG",]
+
+numeric_116 <- numeric(10000)
+
+for (i in 1:10000) {
+  sample_116 <- sample(cars_116$mileage, replace=TRUE)
+  numeric_116[i] <- mean(sample_116)
+}
+
+numeric_116 <- sort(numeric_116)
+
+lower_116 <- numeric_116[round(10000*0.025)]
+upper_116 <- numeric_116[round(10000*0.975)]
+
+lower_116
+upper_116
+```
+
+[26251.84, 31806.51]
+
+## Part B
+
+```{r, echo=FALSE, include=FALSE}
+bsclass <- sclass[sclass$year == "2014",]
+cars_2889 <- bsclass[bsclass$trim == "550",]
+
+b_cars <- nrow(cars_2889)
+
+numeric_2889 <- numeric(10000)
+
+for (i in 1:10000) {
+  sample_2889 <- sample(cars_2889$color == "Black", b_cars, replace=TRUE)
+  numeric_2889[i] <- (sum(sample_2889))/2889
+}
+
+numeric_2889 <- sort(numeric_2889)
+
+lower_2889 <- round(10000*0.025)
+upper_2889 <- round(10000*0.975)
+
+lower_2889 <- numeric_2889[lower_2889]
+upper_2889 <- numeric_2889[upper_2889]
+
+lower_2889 <- round(lower_2889,digits=2)
+upper_2889 <- round(upper_2889,digits=2)
+
+lower_2889
+upper_2889
+```
+
+[0.42, 0.45]
+
+\newpage
+
+# Problem 3
+
+## Part A
+
+```{r, echo=FALSE, include=FALSE}
+a_nbc <- nbcpilotsurvey[nbcpilotsurvey$Show == "Living with Ed" | nbcpilotsurvey$Show == "My Name is Earl",]
+t.test(a_nbc$Q1_Happy~a_nbc$Show)
+```
+
+Question: Between the shows "Living with Ed" and "My Name is Earl", is there evidence that one show consistently produces a higher mean Q1_Happy response among viewers?
+
+Approach: I used the t.test() R function for this question.
+
+Results: After conducting a 95% confidence interval for the difference of these means, The p-value was shown to be 0.2447, and the mean Happy scores for the shows "Living with Ed" and "My Name is Earl" were 3.93 and 3.78, respectively.
+
+Conclusion: Based on these results, since the p-value is greater than 0.05, we do not reject the null hypothesis, meaning that it is not statistically significant enough to provide evidence that one show produces a higher mean Happy response than the other. We can reasonably say that there is not enough evidence.
+
+## Part B
+
+```{r, echo=FALSE, include=FALSE}
+b_nbc <- nbcpilotsurvey[nbcpilotsurvey$Show == "The Biggest Loser" | nbcpilotsurvey$Show == "The Apprentice: Los Angeles",]
+t.test(b_nbc$Q1_Annoyed~b_nbc$Show)
+```
+
+Question: Between the shows "The Biggest Loser" and "The Apprentice: Los Angeles", is there evidence that one show consistently produces a higher mean Q1_Annoyed response among viewers?
+
+Approach: I used the t.test() R function for this question.
+
+Results: After conducting a 95% confidence interval for the difference of these means, the p-value was shown to be 0.03628, and the mean Annoyed scores for the shows "The Biggest Loser" and "The Apprentice: Los Angeles" were 2.04 and 2.31, respectively.
+
+Conclusion: Based on these results, since the p-value is less than 0.05, we can reject the null hypothesis, meaning that it is statistically significant enough to provide evidence that one show produces a higher mean Annoyed response than the other. In this case, we can reasonably say that "The Apprentice: Los Angeles" consistently produces a higher mean Annoyed response among viewers.
+
+## Part C
+
+```{r, echo=FALSE, include=FALSE}
+c_nbc <- nbcpilotsurvey[nbcpilotsurvey$Show == "Dancing with the Stars",]
+x <- sum(nrow(c_nbc[c_nbc$Q2_Confusing == 4,]),nrow(c_nbc[c_nbc$Q2_Confusing == 5,]))
+prop.test(x, (nrow(c_nbc)), conf.level = 0.95)
+```
+
+Question: Based on this sample of respondents about the show "Dancing with the Stars", what proportion of American TV watchers would we expect to give a response of 4 or greater to the “Q2_Confusing” question?
+
+Approach: I used the prop.test() R function for this question.
+
+Results: After conducting a 95% confidence interval for this proportion, the p-value was shown to be less than 2.2e-16 (very close to zero), and the estimated proportion for a response of 4 or greater for the Confusing question of the show "Dancing with the Stars" is approximately 0.08.
+
+Conclusion: Based on these results, since the p-value is less than 0.05, we can reject the null hypothesis, meaning that it is statistically significant enough to provide evidence that the estimated proportion of American TV watchers giving a response of 4 or greater for the Confusing question of the show "Dancing with the Stars" is 0.08. In this case, we can reasonably say that most American TV watchers do not see the show "Dancing with the Stars" as confusing, as only 8% are shown to find the show confusing based on these results.
+
+\newpage
+
+# Problem 4
+
+```{r, echo=FALSE, include=FALSE}
+
+treatment <- ebay[ebay$adwords_pause == 1,]
+treatment_ebay <- treatment$rev_ratio
+control <- ebay[ebay$adwords_pause == 0,]
+control_ebay <- control$rev_ratio
+
+ratio_difference <- function(i, j) {
+  return(mean(i) - mean(j))
+}
+
+ratio_bootstrap <- replicate(10000,{
+  treatment_ratio <- sample(treatment_ebay, replace=TRUE)
+  control_ratio <- sample(control_ebay, replace=TRUE)
+  ratio_difference(treatment_ratio,control_ratio)
+})
+
+quantile(ratio_bootstrap, c(0.025, 0.975))
+
+```
+
+Question: Does the extra traffic brought to our site from paid search results—above and beyond what we’d see if we “went organic”—justify the cost of the ads themselves?
+
+Approach: I had used 10,000 Monte Carlo bootstrapped simulations and a 95% confidence interval.
+
+Results: Based on the 10,000 Monte Carlo bootstrapped simulations, the difference in revenue ratios between the treatment and control DMAs is somewhere between -0.09 and -0.01, with 95% confidence. 
+
+Conclusion: Since both the lower and upper bound of the 95% Monte Carlo bootstrapped confidence interval are less than 0, this means that the difference between the revenue ratios of treatment and control DMAs is statistically significant. Based on these results, it can be reasonably stated that the revenue ratios in the treatment group DMAs were systematically lower than the control group DMAS, meaning that EBay's paid search advertising on Google was not a waste of money and was indeed driving extra revenue.
