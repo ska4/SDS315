@@ -1,0 +1,154 @@
+---
+title: "HW9"
+author: "Saatvik Anantha"
+date: "2024-04-15"
+output: pdf_document
+---
+
+<center>
+EID: ska2242
+
+GitHub Link: https://github.com/ska4/SDS315
+</center>
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+turnout <- read.csv("turnout.csv")
+solder <- read.csv("solder.csv")
+
+library(ggplot2)
+library(tidyverse)
+library(knitr)
+library(dplyr)
+library(tibble)
+library(boot)
+library(mosaic)
+library(MatchIt)
+library(corrplot)
+library(moderndive)
+```
+
+# Question 1
+
+
+## Part A
+
+```{r, echo=FALSE, include=FALSE}
+
+call_1998_prop <- mean(turnout$voted1998[turnout$GOTV_call == 1])
+nocall_1998_prop <- mean(turnout$voted1998[turnout$GOTV_call == 0])
+
+call_1998 <- nrow(turnout[turnout$GOTV_call == 1,])
+nocall_1998 <- nrow(turnout[turnout$GOTV_call == 0,])
+
+part_a_se <- sqrt((call_1998_prop * (1 - call_1998_prop) / call_1998) + (nocall_1998_prop * (1 - nocall_1998_prop) / nocall_1998))
+z <- qnorm(0.975)
+lower_part_a <- (call_1998_prop - nocall_1998_prop) - z * part_a_se
+upper_part_a <- (call_1998_prop - nocall_1998_prop) + z * part_a_se
+```
+
+The proportion of those receiving a GOTV call who voted in 1998 was 0.65.
+
+The sample proportion of those not receiving a GOTV call who voted in 1998 was 0.44.
+
+The large-sample 95% confidence interval for the difference of these two proportions was [0.14, 0.26].
+
+## Part B
+
+```{r, echo=FALSE, include=TRUE}
+
+cor(turnout[c("voted1996", "voted1998", "GOTV_call")])
+
+cor(turnout[c("AGE", "voted1998", "GOTV_call")])
+
+cor(turnout[c("MAJORPTY", "voted1998", "GOTV_call")])
+```
+
+All three of these variables did not have strong evidence to being legitimate confounders that prevent the difference observed from representing the true casual effect of the GOTV call on the likelihood that a person voted in 1998. Though the correlation between people voting in 1998 and people voting in 1996 was moderately significant, the correlation between GOTV calls and people voting in 1996 had minimal significance, indicating that voting in 1996 was likely not a confounder. For the other potential confounders, the age of the person and if they were registered as a member of one of the U.S. political parties, the correlations between these two variables and the GOTV call and people voting in 1998 variables all had minimal significance as well, respectively, meaning these two variables were also likely not confounders.
+
+
+## Part C
+
+```{r, echo=FALSE, include=TRUE}
+
+turnout_matched = matchit(GOTV_call ~ voted1996 + AGE + MAJORPTY,
+                                 data = turnout, ratio=5) %>%
+  match.data
+
+turnout_model <- glm(voted1998 ~ GOTV_call + voted1996 + AGE + MAJORPTY,
+                   data = turnout_matched, family = binomial)
+
+summary(turnout_model)
+```
+
+```{r, echo=FALSE, include=FALSE}
+call_1998_prop_matched <- mean(turnout_matched$voted1998[turnout_matched$GOTV_call == 1])
+nocall_1998_prop_matched <- mean(turnout_matched$voted1998[turnout_matched$GOTV_call == 0])
+
+call_1998_matched <- nrow(turnout_matched[turnout_matched$GOTV_call == 1,])
+nocall_1998_matched <- nrow(turnout_matched[turnout_matched$GOTV_call == 0,])
+
+part_a_se_matched <- sqrt((call_1998_prop_matched * (1 - call_1998_prop_matched) / call_1998_matched) + (nocall_1998_prop_matched * (1 - nocall_1998_prop_matched) / nocall_1998_matched))
+z <- qnorm(0.975)
+lower_part_a_matched <- (call_1998_prop_matched - nocall_1998_prop_matched) - z * part_a_se_matched
+upper_part_a_matched <- (call_1998_prop_matched - nocall_1998_prop_matched) + z * part_a_se_matched
+```
+
+The matched proportion of those receiving a GOTV call who voted in 1998 was 0.65.
+
+The matched sample proportion of those not receiving a GOTV call who voted in 1998 was 0.57.
+
+The matched large-sample 95% confidence interval for the difference of these two proportions was [0.01, 0.14].
+
+
+With these findings, it can be safely concluded that people receiving a GOTV call had much greater chances of voting in the 1998 elections than those who did not receive a GOTV call. The effect size, as shown from the dataset and its corresponding matched dataset, is estimated to be between 1% and 26% higher among the people that received a GOTV call. This shows the importance of GOTV calls to encourage people to vote.
+
+\newpage
+
+# Problem 2
+
+## Part A
+
+```{r, echo=FALSE, include=TRUE}
+solder$Opening <- (c("S" = 1, "M" = 2, "L" = 3)[solder$Opening])
+solder$Solder <- (c("Thin" = 1, "Thick" = 2)[solder$Solder])
+
+plot(solder$Opening, solder$skips, xlab = "Solder Opening Size", ylab = "Number of Skips", main = "Correlation between the Opening Size of Solder and Number of Skips", col = "orange")
+abline(lm(skips ~ Opening, data = solder), col = "red")
+```
+
+This plot shows the correlation between the opening size of each solder gun and the number of skips. 1.0 refers to Small, 2.0 refers to Medium, and 3.0 refers to Large. The plot shows that the opening size and number of skips are negatively correlated, with number of skips decreasing as the opening size increases.
+
+```{r, echo=FALSE, include=TRUE}
+plot(solder$Solder, solder$skips, xlab = "Alloy Thickness", ylab = "Number of Skips", main = "Correlation between the Thickness of Alloy and Number of Skips", col = "purple")
+abline(lm(skips ~ Solder, data = solder), col = "red")
+```
+
+This plot shows the correlation between the thickness of each alloy and the number of skips. 1.0 refers to Thin and 2.0 refers to Thick. The plot shows that the alloy thickness and number of skips are negatively correlated, with number of skips decreasing as the alloy thickness increases.
+
+\newpage
+
+## Part B
+
+```{r, echo=FALSE, include=TRUE}
+regression_model <- lm(solder$skips ~ solder$Opening + solder$Solder + solder$Opening:solder$Solder)
+
+get_regression_table(regression_model)
+```
+
+
+## Part C
+
+The intercept coefficient is predicted to be about 37.8 when the Opening sizes and Solder thickness are at their baseline values.
+
+The decrease in the opening size when the solder thickness values are constant is about 12.2 units, meaning this is the estimated change between the different opening sizes of small, medium, and large.
+
+The decrease in the solder thickness when the opening size values are constant is about 14.9 units, meaning this is the estimated change between the different solder thicknesses of thin and thick.
+
+This coefficient represents the increase as both the opening sizes and solder thickness values are increased, which would be approximately 4.83 units together, rather than comparing the increases in these two variables independently.
+
+## Part D
+
+I would likely recommend a large opening size and a high solder thickness, primarily because the number of skips decrease as the opening sizes and thickness amounts increase.
