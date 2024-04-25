@@ -1,0 +1,120 @@
+---
+title: "HW10"
+author: "Saatvik Anantha"
+date: "2024-04-21"
+output: pdf_document
+---
+
+<center>
+EID: ska2242
+
+GitHub Link: https://github.com/ska4/SDS315
+</center>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+redlining <- read.csv("redlining.csv")
+groceries <- read.csv("groceries.csv")
+
+library(ggplot2)
+library(tidyverse)
+library(knitr)
+library(dplyr)
+library(tibble)
+library(boot)
+library(mosaic)
+library(MatchIt)
+library(corrplot)
+library(moderndive)
+```
+
+# Question 1
+
+```{r, echo=FALSE, include=FALSE}
+rlm <- lm(policies ~ minority + fire + age + income, data = redlining)
+summary(rlm)
+confint(rlm)
+```
+
+1) The question that I am trying to answer is whether or not there is an association between the number of FAIR policies and the racial/ethnic composition of a ZIP code, while adjusted for the fire, age, and income variables.
+
+2) I used a linear regression model and a confidence interval to approach this question, and used the lm() and confint() functions in R to find these, respectively, along with a summary of the linear regression model.
+
+3) The coefficient estimate for the minority variable of 0.008 indicates a weak positive relationship between the number of FAIR policies and racial composition of a ZIP code with adjustments made for fire, age, and income variables, with a 95% confidence interval of [0.003, 0.014]. The p-value of 0.006 indicates this finding is statistically significant, as it is less than 0.05. 
+
+4) With our conclusions based on this given data, it is reasonable to conclude that although there is a positive correlation between the amount of FAIR policies and racial/ethnic composition of a ZIP code while adjusted for the fire, age, and income variables, it is shown that this correlation is very weak, and could be considered nearly negligible.
+
+\newpage
+
+# Question 2
+
+## Part A
+
+```{r, echo=FALSE, include=TRUE}
+part_a_data <- groceries %>%
+  group_by(Store) %>%
+  summarise(avg_price = mean(Price))
+
+ggplot(part_a_data, aes(x = Store, y = avg_price, fill = Store)) + geom_bar(stat = "identity", show.legend = FALSE) + labs(title = "Price Differences across Stores", x = "Store", y = "Average Product Price ($)") + scale_y_continuous(breaks = seq(0, 4, by = 0.25), limits = c(0, 4)) + coord_flip()
+```
+
+This bar graph shows all the stores that are identified in our dataset and their average product prices respectively, out of the products that are sold at their respective stores, which can help determine general price differences across stores.
+
+## Part B
+
+```{r, echo=FALSE, include=TRUE}
+ggplot(groceries, aes(x = Product, fill = Product)) + geom_bar(show.legend = FALSE)  + coord_flip() + theme(axis.text.y = element_text(size = 8, hjust = 0, vjust = 0.5)) + labs(title = "Number of Stores that sell each Product", x = "Number of Stores", y = "Product") + scale_y_continuous(breaks = seq(0, 16, by = 1), limits = c(0, 16))
+```
+
+This bar graph shows all the products that are identified in our dataset and how many stores sell that product, which can help determine which stores are reliable for the availability of certain products based on customer demands.
+
+\newpage
+
+## Part C
+
+```{r, echo=FALSE, include=FALSE}
+groceries$Type <- factor(groceries$Type)
+
+groceries$Type <- relevel(groceries$Type, ref = "Natural")
+
+part_c_rlm <- lm(Price ~ Type + Product, data = groceries)
+
+confint(part_c_rlm)
+```
+
+Compared with ordinary grocery stores (like Albertsons, HEB, or Krogers), convenience stores charge somewhere between 0.61 and 0.71 dollars more for the same product.
+
+## Part D
+
+```{r, echo=FALSE, include=FALSE}
+groceries$Store <- factor(groceries$Store)
+
+groceries$Store <- relevel(groceries$Store, ref = "Kroger")
+
+part_d_rlm <- lm(Price ~ Store + Product, data = groceries)
+
+confint(part_d_rlm)
+
+```
+
+When comparing the same product, the two stores that charge the lowest prices are Kroger and Walmart, while the two stores that charge the highest prices are Whole Foods and Wheatsville Food Co-Op.
+
+## Part E
+
+Central Market charges a similar amount to HEB for the same product, as the 95% Price confidence interval for Central Market is [-0.35, 0.61] and the confidence interval for HEB [-0.38, 0.49], which is fairly similar compared to other stores. For example, the Albertsons store has a confidence interval of [0.24, 1.16], which is much more different than both Central Market and HEB.
+
+## Part F
+
+```{r, echo=FALSE, include=FALSE}
+groceries <- groceries %>% 
+  mutate(Income10K = round(Income/10000))
+
+part_f_rlm <- lm(Price ~ Product + Income10K, data = groceries)
+summary(part_f_rlm)
+sd(groceries$Income10K)
+```
+
+Since the sign of the Income10K coefficient is negative, this suggests that consumers in poorer ZIP codes seem to pay less for the same product on average.
+
+One-standard deviation increase in the income of a ZIP code seems to be associated with a -0.073 standard-deviation change in the price that consumers in that ZIP code expect to pay for the same product.
